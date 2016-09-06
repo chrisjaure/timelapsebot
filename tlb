@@ -1,0 +1,37 @@
+#!/bin/bash
+
+SCRIPT=$(readlink -f "$0")
+TLB_DIR=$(dirname "$SCRIPT")
+IMG_DIR=/media/usb0
+CRON_DIR=/etc/cron.d
+
+function capture () {
+	local DATE=$(date +"%Y-%m-%d_%H%M")
+
+	fswebcam --resolution 1280x960 --skip 16 --jpeg 85 "$IMG_DIR/$DATE.jpg"
+}
+
+function start () {
+	cp "$TLB_DIR/crontab" "$CRON_DIR/timelapsebot"
+	cd "$IMG_DIR"
+	# nohup python -m SimpleHTTPServer 80 > /dev/null 2>&1  &
+	# echo "$!" > "$TLB_DIR/.pid"
+}
+
+function stop () {
+	rm "$CRON_DIR/timelapsebot"
+	if [ -e "$TLB_DIR/.pid" ]; then
+		kill $(cat "$TLB_DIR/.pid")
+		rm "$TLB_DIR/.pid"
+	fi
+}
+
+function isCommand () {
+	grep -F -q -x "$1" <<EOF
+start
+stop
+capture
+EOF
+}
+
+isCommand "$1" && "$@" || echo "invalid command"
