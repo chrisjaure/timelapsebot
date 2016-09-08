@@ -7,8 +7,14 @@ CRON_DIR=/etc/cron.d
 
 function capture () {
 	local DATE=$(date +"%Y-%m-%d_%H%M")
-
-	fswebcam --resolution 1280x960 --skip 16 --jpeg 85 "$IMG_DIR/$DATE.jpg"
+	# reload webcam modules every 5 mins to prevent issues
+	local MINOFFSET=$[ $(date +"%M") % 5 ]
+	if [ $MINOFFSET -eq "0" ]; then
+		sudo modprobe -r uvcvideo
+		sudo modprobe uvcvideo
+		echo "Reloaded modules"
+	fi
+	fswebcam --resolution 1280x960 --delay 1 --skip 15 --jpeg 85 --quiet "$IMG_DIR/$DATE.jpg"
 }
 
 function start () {
