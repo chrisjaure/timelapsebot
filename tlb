@@ -4,40 +4,55 @@ SCRIPT=$(readlink -f "$0")
 TLB_DIR=$(dirname "$SCRIPT")
 IMG_DIR=/media/usb0
 CRON_DIR=/etc/cron.d
+INPUT=/dev/video0
 
 function capture () {
 	local DATE=$(date +"%Y-%m-%d_%H%M")
-	# reload webcam modules every 5 mins to prevent issues
-	local MINOFFSET=$[ $(date +"%M") % 5 ]
-	if [ $MINOFFSET -eq "0" ]; then
-		sudo modprobe -r uvcvideo
-		sudo modprobe uvcvideo
-		echo "Reloaded modules"
+	local MINOFFSET=$[ $(date +"%-M") % 5 ]
+	local PID=$(fuser $INPUT)
+	if [ "$PID" ]; then
+		# there's a problem with the previous process so kill it
+		kill -9 $PID
+		sleep 5
+		reloadModules
+	elif [ $MINOFFSET -eq "0" ]; then
+		# reload webcam modules every 5 mins to prevent issues
+		reloadModules
 	fi
-	fswebcam --resolution 1280x960 --delay 1 --skip 15 --jpeg 85 --quiet "$IMG_DIR/$DATE.jpg"
+	fswebcam --device $INPUT --resolution 1280x960 --delay 1 --skip 15 --jpeg 85 --quiet "$IMG_DIR/$DATE.jpg"
 }
 
 function start () {
 	cp "$TLB_DIR/crontab" "$CRON_DIR/timelapsebot"
 	cd "$IMG_DIR"
-	# nohup python -m SimpleHTTPServer 80 > /dev/null 2>&1  &
-	# echo "$!" > "$TLB_DIR/.pid"
 }
 
 function stop () {
 	rm "$CRON_DIR/timelapsebot"
-	if [ -e "$TLB_DIR/.pid" ]; then
-		kill $(cat "$TLB_DIR/.pid")
-		rm "$TLB_DIR/.pid"
-	fi
 }
 
-function isCommand () {
-	grep -F -q -x "$1" <<EOF
-start
-stop
-capture
-EOF
+function reloadModules () {
+	sudo modprobe -r uvcvideo
+	sudo modprobe uvcvideo
+	echo "Reloaded modules"
 }
 
-isCommand "$1" && "$@" || echo "invalid command"
+if [[ $1 =~ ^(start|stop|capture)$ ]]; then
+	"$@"
+else
+	echo "\
+  _______                __                         ____        __ 
+ /_  __(_)___ ___  ___  / /___ _____  ________     / __ )____  / /_
+  / / / / __ \`__ \\/ _ \\/ / __ \`/ __ \\/ ___/ _ \\   / __  / __ \\/ __/
+ / / / / / / / / /  __/ / /_/ / /_/ (__  )  __/  / /_/ / /_/ / /_  
+/_/ /_/_/ /_/ /_/\___/_/\__,_/ .___/____/\___/  /_____/\____/\__/  
+                            /_/                                    
+Run as root!
+
+tlb <command>
+
+Commands:
+	start		add a cron job to take a photo every minute
+	stop		remove cron job
+	capture		take a photo"
+fi
