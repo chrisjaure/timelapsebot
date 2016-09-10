@@ -1,1 +1,1 @@
-* * * * * root /home/cjaure/timelapsebot/tlb capture 2>&1 | /usr/bin/logger -t TLB -i
+* * * * * root __SCRIPT_DIR__ capture 2>&1 | /usr/bin/logger -t TLB -i
