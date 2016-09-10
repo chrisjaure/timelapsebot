@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e # exit on error
+
 SCRIPT=$(readlink -f "$0")
 TLB_DIR=$(dirname "$SCRIPT")
 IMG_DIR=/media/usb0
