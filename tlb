@@ -25,7 +25,7 @@ function capture () {
 }
 
 function start () {
-	sed -e "s@__SCRIPT_DIR__@$TLB_DIR@" "$TLB_DIR/crontab" > "$CRON_DIR/timelapsebot"
+	sed -e "s@__SCRIPT_PATH__@$SCRIPT@" "$TLB_DIR/crontab" > "$CRON_DIR/timelapsebot"
 }
 
 function stop () {
