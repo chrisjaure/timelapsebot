@@ -1,1 +1,1 @@
-* * * * * root __SCRIPT_PATH__ capture 2>&1 | /usr/bin/logger -t TLB -i
+* * * * * chip __SCRIPT_PATH__ capture 2>&1 | /usr/bin/logger -t TLB -i
