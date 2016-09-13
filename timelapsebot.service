@@ -1,0 +1,8 @@
+[Unit]
+Description=Timelapse bot photo taking
+
+[Service]
+Type=oneshot
+User=chip
+ExecStart=/usr/local/bin/tlb capture
+

@@ -1,0 +1,9 @@
+[Unit]
+Description=timer for timelapsebot to take photo every minute
+
+[Timer]
+OnBootSec=60sec
+OnUnitActiveSec=60sec
+
+[Install]
+WantedBy=timers.target
