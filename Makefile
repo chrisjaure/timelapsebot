@@ -3,7 +3,7 @@ SYSTEMD_UNIT_DIR = /etc/systemd/system
 
 install-bin:
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	install -m 0755 tlb $(DESTDIR)$(PREFIX)/bin
+	install -m 0755 tlb tlb-gtk $(DESTDIR)$(PREFIX)/bin
 
 install-service:
 	mkdir -p $(DESTDIR)$(SYSTEMD_UNIT_DIR)
@@ -15,4 +15,5 @@ install: install-bin install-service
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/tlb
+	rm -f $(DESTDIR)$(PREFIX)/bin/tlb-gtk
 	rm -f $(DESTDIR)$(SYSTEMD_UNIT_DIR)/timelapsebot.*
