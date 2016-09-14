@@ -1,0 +1,111 @@
+#!/usr/bin/env python
+
+import pygtk
+pygtk.require('2.0')
+import gtk
+import os
+
+class timelapsebot:
+	def disable_buttons(self):
+		self.cancel.set_sensitive(False)
+		self.start.set_sensitive(False)
+		self.stop.set_sensitive(False)
+		self.capture.set_sensitive(False)
+
+	def cancel_action(self,btn):
+		self.disable_buttons()
+		gtk.main_quit()
+
+	def start_action(self,btn):
+		self.update_status("Timelapse bot starting...")
+		os.system("sudo tlb start")
+		self.clear_status()
+
+	def stop_action(self,btn):
+		self.update_status("Timelapse bot stopping...")
+		os.system("sudo tlb stop")
+		self.clear_status()
+
+	def capture_action(self,btn):
+		self.update_status("Capturing image...")
+		os.system("tlb preview")
+		self.clear_status()
+
+	def update_status(self, msg):
+		self.status.set_label(msg)
+		while gtk.events_pending():
+ 			gtk.main_iteration(False)
+
+	def clear_status(self):
+		self.status.set_label("")
+
+	def create_window(self):
+		self.window = gtk.Window()
+		title = "Timelapse Bot"
+		self.window.set_title(title)
+		self.window.set_border_width(5)
+		self.window.set_default_size(500, 300)
+		self.window.set_decorated(True)
+		self.window.maximize()
+		self.window.connect("delete_event", gtk.main_quit)
+		windowicon = self.window.render_icon(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU)
+		self.window.set_icon(windowicon)
+
+		#Create HBox for buttons
+		self.button_box = gtk.HBox()
+		self.button_box.show()
+		
+		#Cancel button
+		self.cancel = gtk.Button(stock = gtk.STOCK_CANCEL)
+		self.cancel.set_border_width(4)
+		self.cancel.connect("clicked", self.cancel_action)
+		self.button_box.pack_start(self.cancel)
+		self.cancel.show()
+		
+		#Start button
+		self.start = gtk.Button("Start")
+		self.start.set_border_width(4)
+		self.start.connect("clicked", self.start_action)
+		self.button_box.pack_start(self.start)
+		self.start.show()
+		
+		#Stop button
+		self.stop = gtk.Button("Stop")
+		self.stop.set_border_width(4)
+		self.stop.connect("clicked", self.stop_action)
+		self.button_box.pack_start(self.stop)
+		self.stop.show()
+		
+		#Capture button
+		self.capture = gtk.Button("Capture")
+		self.capture.set_border_width(4)
+		self.capture.connect("clicked", self.capture_action)
+		self.button_box.pack_start(self.capture)
+		self.capture.show()
+		
+		#Create HBox for status label
+		self.label_box = gtk.HBox()
+		self.label_box.show()
+		self.status = gtk.Label()
+		self.status.show()
+		self.label_box.pack_start(self.status)
+		
+		#Create VBox and pack the above HBox's
+		self.vbox = gtk.VBox()
+		self.vbox.pack_start(self.button_box)
+		self.vbox.pack_start(self.label_box)
+		self.vbox.show()
+		
+		self.window.add(self.vbox)
+		self.window.show()
+
+	def __init__(self):
+		self.create_window()
+
+
+def main():
+    gtk.main()
+
+if __name__ == "__main__":
+    go = timelapsebot()
+    main()

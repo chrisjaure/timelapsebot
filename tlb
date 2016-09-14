@@ -24,6 +24,11 @@ function capture () {
 	fi
 }
 
+function preview () {
+	capture
+	pcmanfm $(find $IMG_DIR -type f | tail -n 1)
+}
+
 function start () {
 	systemctl enable timelapsebot.timer
 	systemctl start timelapsebot.timer
@@ -116,7 +121,7 @@ MA2CE4ITBxcHF+cY5xiAGYAZ/Rj9GHQXdBfmFOYUNBE0EdIL0gtE+kT6C/ML89vv
 SOUND
 }
 
-if [[ $1 =~ ^(start|stop|capture)$ ]]; then
+if [[ $1 =~ ^(start|stop|capture|preview)$ ]]; then
 	"$@"
 else
 	echo "\
@@ -133,5 +138,6 @@ tlb <command>
 Commands:
 	start		take a photo every minute
 	stop		stop timer
+	preview		capture and open image
 	capture		take a photo"
 fi
