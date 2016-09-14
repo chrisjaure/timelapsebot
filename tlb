@@ -2,10 +2,7 @@
 
 set -e # exit on error
 
-SCRIPT=$(readlink -f "$0")
-TLB_DIR=$(dirname "$SCRIPT")
 IMG_DIR=/media/usb0
-CRON_DIR=/etc/cron.d
 INPUT=/dev/video0
 PLAY_SOUND=true
 
@@ -18,7 +15,7 @@ function capture () {
 		kill -9 $PID
 		sleep 5
 	fi
-	fswebcam --device $INPUT --resolution 1280x960 --delay 1 --skip 15 --jpeg 85 --quiet "$IMG_DIR/$DATE.jpg"
+	fswebcam --device $INPUT --resolution 1280x960 --jpeg 85 --quiet "$IMG_DIR/$DATE.jpg"
 	if [ $PLAY_SOUND ]; then
 		play_sound
 	fi
@@ -30,7 +27,6 @@ function preview () {
 }
 
 function start () {
-	systemctl enable timelapsebot.timer
 	systemctl start timelapsebot.timer
 }
 
