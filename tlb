@@ -1,41 +1,36 @@
-#!/bin/bash
+#!/usr/bin/env python
 
-set -e # exit on error
+import ConfigParser
+import os
+import base64
+import subprocess
+from datetime import datetime
+import argparse
 
-IMG_DIR=/media/usb0
-INPUT=/dev/video0
-PLAY_SOUND=true
+config = ConfigParser.ConfigParser()
+config.read(os.path.expanduser('~/.tlbrc'))
 
-function capture () {
-	local DATE=$(date +"%Y-%m-%d_%H%M")
-	local MINOFFSET=$[ $(date +"%-M") % 5 ]
-	local PID=$(fuser $INPUT)
-	if [ "$PID" ]; then
-		# there's a problem with the previous process so kill it
-		kill -9 $PID
-		sleep 5
-	fi
-	fswebcam --device $INPUT --resolution 1280x960 --jpeg 85 --quiet "$IMG_DIR/$DATE.jpg"
-	if [ $PLAY_SOUND ]; then
-		play_sound
-	fi
-}
+config_section = 'TIMELAPSEBOT'
+config_savedir = 'SAVE_DIR'
+config_input = 'INPUT'
+config_playsound = 'PLAY_SOUND'
 
-function preview () {
-	capture
-	pcmanfm $(find $IMG_DIR -type f | tail -n 1)
-}
+if (config.has_option(config_section, config_savedir)):
+	SAVE_DIR = config.get(config_section, config_savedir)
+else:
+	SAVE_DIR = '/tmp'
 
-function start () {
-	systemctl start timelapsebot.timer
-}
+if (config.has_option(config_section, config_input)):
+	INPUT = config.get(config_section, config_input)
+else:
+	INPUT = '/dev/video0'
 
-function stop () {
-	systemctl stop timelapsebot.timer
-}
+if (config.has_option(config_section, config_playsound)):
+	PLAY_SOUND = config.getboolean(config_section, config_playsound)
+else:
+	PLAY_SOUND = False
 
-function play_sound () {
-	openssl base64 -d <<SOUND | aplay --quiet
+SOUND = base64.b64decode('''\
 UklGRsQnAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YaAnAAAAAOki
 6SLNMc0x1jrWOilAKUBrQmtCzEHMQUM+Qz57N3s3cSxxLIUYhRj13/Xfbc9tzz3F
 PcXNvs2+2LvYu9i72LvXvNe8y8HLwRDKEMoE1wTX5PHk8RolGiUmMyYzyzvLO9xA
@@ -114,26 +109,30 @@ HOCS5pLmcfFx8dIQ0hDeGd4ZFB8UHxwiHCJwI3AjQSNBI6AhoCGDHoMesBmwGU4S
 ThLK+Mr4QuxC7H3mfeYZ4xnjX+Ff4QzhDOEA4gDiNuQ25MLnwucA7QDtyvXK9TAN
 MA2CE4ITBxcHF+cY5xiAGYAZ/Rj9GHQXdBfmFOYUNBE0EdIL0gtE+kT6C/ML89vv
 2+9J7knu2e3Z7VTuVO6Y75jvjvGO8Sn0KfRz93P3F/wX/BEFEQX/Bf8FAAAAAAAA
-SOUND
-}
+''')
 
-if [[ $1 =~ ^(start|stop|capture|preview)$ ]]; then
-	"$@"
-else
-	cat <<HELP
-  _____ _           _                   ___  ___ _____ 
- |_   _(_)_ __  ___| |__ _ _ __ ___ ___| _ )/ _ \_   _|
-   | | | | '  \/ -_) / _\` | '_ (_-</ -_) _ \ (_) || |  
-   |_| |_|_|_|_\___|_\__,_| .__/__/\___|___/\___/ |_|  
-                          |_|                          
----------------------------------------------------------
+def capture():
+	DATE = datetime.now().strftime('%Y-%m-%d_%H%M')
+	subprocess.call(['fswebcam', '--device', INPUT, '--resolution', '1280x960', '--jpeg', '85', '--quiet', '{}/{}.jpg'.format(SAVE_DIR, DATE)])
+	if (PLAY_SOUND):
+		play_sound()
+def preview():
+	capture()
+	last_image = sorted(os.listdir(SAVE_DIR))[0]
+	subprocess.call(['pcmanfm', SAVE_DIR + '/' + last_image])
+def start():
+	subprocess.call(['systemctl', 'start', 'timelapsebot.timer'])
+def stop():
+	subprocess.call(['systemctl', 'stop', 'timelapsebot.timer'])
+def play_sound():
+	process = subprocess.Popen(['aplay', '--quiet'], stdin=subprocess.PIPE)
+	process.stdin.write(SOUND)
+	process.communicate()
 
-Usage: tlb <command>
-
-Commands:
-	start		take a photo every minute (run as root)
-	stop		stop timer (run as root)
-	preview		capture and open image
-	capture		take a photo
-HELP
-fi
+parser = argparse.ArgumentParser(description='Take a photo every minute. Reads config from ~/.tlbrc')
+subparsers = parser.add_subparsers(title='required', metavar='<command>')
+subparsers.add_parser('start', help='start the timer').set_defaults(func=start)
+subparsers.add_parser('stop', help='stop the timer').set_defaults(func=stop)
+subparsers.add_parser('capture', help='capture an image').set_defaults(func=capture)
+subparsers.add_parser('preview', help='capture and open latest image').set_defaults(func=preview)
+parser.parse_args().func()
