@@ -118,7 +118,7 @@ def capture():
 		play_sound()
 def preview():
 	capture()
-	last_image = sorted(os.listdir(SAVE_DIR))[0]
+	last_image = sorted(os.listdir(SAVE_DIR), reverse=True)[0]
 	subprocess.call(['pcmanfm', SAVE_DIR + '/' + last_image])
 def start():
 	subprocess.call(['systemctl', 'start', 'timelapsebot.timer'])
